@@ -1,7 +1,13 @@
 {
-  "editor.codeActionsOnSave": {
-    "source.fixAll": "explicit",
-    "source.organizeImports": "explicit",
-    "source.sortMembers": "explicit"
-  }
+  "git.enabled": false,
+  "git.decorations.enabled": false,
+  "diffEditor.renderIndicators": false,
+  "editor.renderMarginRepaint": false,
+  "explorer.decorations.colors": false,
+  "explorer.decorations.badges": false,
+  "gitlens.codeLens.enabled": false,
+  "gitlens.currentLine.enabled": false,
+  "gitlens.hovers.enabled": false,
+  "gitlens.statusBar.enabled": false,
+  "gitlens.blame.annotations.enabled": false
 }

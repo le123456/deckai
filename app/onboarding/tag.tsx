@@ -5,10 +5,10 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { useState } from 'react';
-import { onboardingStyles as base } from './styles';
-import { ProgressBar } from './ProgressBar';
-import { useOnboarding } from './OnboardingProvider';
-import { useLocale } from '../i18n/LocaleProvider';
+import { onboardingStyles as base } from '../../src/onboarding/styles';
+import { ProgressBar } from '../../src/onboarding/ProgressBar';
+import { useOnboarding } from '../../src/onboarding/OnboardingProvider';
+import { useLocale } from '../../src/i18n/LocaleProvider';
 
 export default function OnboardingTagScreen() {
   const router = useRouter();
@@ -68,8 +68,8 @@ export default function OnboardingTagScreen() {
           <Image
             source={
               locale === 'pt-BR'
-                ? require('../../assets/onboarding/tag_hint_pt.jpg')
-                : require('../../assets/onboarding/tag_hint_en.jpg')
+                ? require('../../assets/onboarding/tag_hint_pt.webp')
+                : require('../../assets/onboarding/tag_hint_en.webp')
             }
             style={{
               width: 260,

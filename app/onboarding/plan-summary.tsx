@@ -6,110 +6,111 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Image,
   Animated,
+  ActivityIndicator,
+  ScrollView,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { onboardingStyles as base } from './styles';
-import { ProgressBar } from './ProgressBar';
-import { useLocale } from '../i18n/LocaleProvider';
-import { useOnboarding } from './OnboardingProvider';
+import { onboardingStyles as base } from '../../src/onboarding/styles';
+import { ProgressBar } from '../../src/onboarding/ProgressBar';
+import { useLocale } from '../../src/i18n/LocaleProvider';
+import { useProfile } from '../../src/profile/useProfile';
+import { arenaMap } from '../../src/utils/arenaMap';
 
-type Card = {
-  name: string;
+type CRCard = {
   elixirCost?: number;
-  iconUrls?: { medium?: string };
 };
 
-const TROPHY_CAP = 10000;
-const MAX_WINRATE_AFTER = 70;
-const MIN_WINRATE_DELTA = 7;
+function getArenaIndex(t: number): number {
+  const thresholds = [
+    300, 600, 1000, 1300, 1600, 2000, 2300, 2600, 3000,
+    3300, 3600, 4000, 4300, 4600, 5000, 5300, 5600, 6000,
+    6300, 6600, 7000, 7300, 7600, 8000,
+  ];
+  const index = thresholds.findIndex((x) => t < x);
+  return index === -1 ? thresholds.length : index;
+}
 
 export default function OnboardingPlanSummary() {
   const router = useRouter();
   const { t } = useLocale();
-  const { answers } = useOnboarding();
+  const { profile, loading } = useProfile();
 
-  const rawPlayer = answers.player as any;
-  const player = Array.isArray(rawPlayer) ? rawPlayer[0] : rawPlayer;
-
-  const trophies: number = player?.trophies ?? 0;
-  const wins: number = player?.wins ?? 0;
-  const losses: number = player?.losses ?? 0;
-  const battles = wins + losses;
-
-  const currentWinRate =
-    battles > 0 ? Math.round((wins / battles) * 100) : 0;
-
-  // 🎯 Meta: +20% com limite 10k
-  const rawTarget = trophies * 1.2;
-  const targetTrophies: number =
-    trophies > 0 ? Math.min(Math.round(rawTarget), TROPHY_CAP) : 300;
-  const trophiesDelta = Math.max(targetTrophies - trophies, 0);
-
-  // 📈 Winrate após plano
-  let suggestedWinRate = 55;
-  if (currentWinRate > 0) {
-    const boosted = Math.round(currentWinRate * 1.25);
-    let candidate = Math.min(boosted, MAX_WINRATE_AFTER);
-    if (candidate < currentWinRate + MIN_WINRATE_DELTA) {
-      candidate = Math.min(
-        currentWinRate + MIN_WINRATE_DELTA,
-        MAX_WINRATE_AFTER
-      );
-    }
-    suggestedWinRate = candidate;
-  }
-
-  const currentDeck: Card[] = (player?.currentDeck ?? []) as Card[];
-
-  const avgElixir: string =
-    currentDeck.length > 0
-      ? (
-          currentDeck.reduce(
-            (sum: number, c: Card) => sum + (c.elixirCost ?? 0),
-            0
-          ) / currentDeck.length
-        ).toFixed(1)
-      : '3.5';
-
-  const synergyScore = 7.2;
-
-  function handleStart() {
-    router.replace('/(tabs)');
-  }
-
-  function handleSkip() {
-    router.replace('/(tabs)');
-  }
-
-  // Animação para suavizar entrada
   const cardAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     Animated.timing(cardAnim, {
       toValue: 1,
-      duration: 250,
+      duration: 260,
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [cardAnim]);
 
-  const cardAnimatedStyle = {
+  if (loading || !profile) {
+    return (
+      <SafeAreaView style={styles.loadingSafe}>
+        <ActivityIndicator size="large" color="#7C3AED" />
+        <Text style={styles.loadingText}>
+          {t('onboarding.planSummary.loading')}
+        </Text>
+      </SafeAreaView>
+    );
+  }
+
+  const player = profile.player_json ?? {};
+  const tag = profile.tag ?? '';
+
+  const trophies: number = player?.trophies ?? 0;
+  const deck: CRCard[] = (player?.currentDeck ?? []) as CRCard[];
+
+  const targetTrophies =
+    trophies > 0 ? Math.min(Math.round(trophies * 1.3), 10000) : 300;
+
+  const trophiesDelta = Math.max(targetTrophies - trophies, 0);
+
+  const currentArenaIndex = getArenaIndex(trophies);
+  const targetArenaIndex = getArenaIndex(targetTrophies);
+
+  const currentArenaImg = arenaMap[currentArenaIndex];
+  const targetArenaImg = arenaMap[targetArenaIndex];
+
+  const avgElixir =
+    deck.length > 0
+      ? (
+          deck.reduce((s, c) => s + (c.elixirCost ?? 0), 0) / deck.length
+        ).toFixed(1)
+      : '3.5';
+
+  // sinergia alta, bem "preview PRO"
+  const synergy = 9;
+
+  const deckSlots: number[] = Array.from({ length: 8 }, (_, i) => i);
+
+  const cardStyle = {
     opacity: cardAnim,
     transform: [
       {
         translateY: cardAnim.interpolate({
           inputRange: [0, 1],
-          outputRange: [12, 0],
+          outputRange: [16, 0],
         }),
       },
     ],
   };
 
+  function handlePro() {
+    // futuramente: abrir paywall / RevenueCat
+    router.replace('/(tabs)');
+  }
+
+  function handleFree() {
+    router.replace('/(tabs)');
+  }
+
   return (
     <SafeAreaView style={base.safe}>
-      {/* topo */}
       <View style={base.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={22} color="#111827" />
@@ -118,411 +119,342 @@ export default function OnboardingPlanSummary() {
 
       <ProgressBar step={7} total={7} />
 
-      {/* Conteúdo principal */}
-      <View style={base.screenContainer}>
-        <Text style={styles.heroTitle}>
-          {t('onboarding.planSummary.heroTitle').replace(
-            '{name}',
-            player?.name ?? 'Player'
-          )}
-        </Text>
-
-        <Text style={styles.heroSubtitle}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      >
+        {/* Uma frase só, bem discreta */}
+        <Text style={styles.subtitleOnly}>
           {t('onboarding.planSummary.heroSubtitle')}
         </Text>
 
-        {/* CARD */}
-        <Animated.View style={[styles.cardWrapper, cardAnimatedStyle]}>
-          <LinearGradient
-            colors={['#3A0CA3', '#4C1D95', '#6D28D9']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.card}
-          >
-            <View style={styles.cardHeader}>
-              <View>
-                <Text style={styles.playerName}>{player?.name}</Text>
+        {/* CARD PRINCIPAL */}
+        <Animated.View style={[styles.mainCard, cardStyle]}>
+          {/* Linha fina no topo */}
+          <View style={styles.topLineFull} />
 
-                {!!player?.tag && (
-                  <Text style={styles.playerTag}>{player.tag}</Text>
-                )}
+          {/* Nome + tag */}
+          <Text style={styles.playerName}>
+            {player?.name ?? 'Player'}
+            {tag ? ` • #${tag}` : ''}
+          </Text>
 
-                {!!player?.arena?.name && (
-                  <Text style={styles.arenaText}>
-                    {t('onboarding.planSummary.trophies').replace(
-                      '{arena}',
-                      player.arena.name
-                    )}
-                  </Text>
+          {/* ARENAS – maiores e com mais destaque */}
+          <View style={styles.arenasRow}>
+            <View style={styles.arenaCol}>
+              <View style={styles.arenaBadge}>
+                {currentArenaImg && (
+                  <Image
+                    source={currentArenaImg}
+                    style={styles.arenaImg}
+                    resizeMode="contain"
+                  />
                 )}
               </View>
-
-              <View style={styles.trophyPill}>
-                <Ionicons name="trophy" size={13} color="#FACC15" />
-                <Text style={styles.trophyPillText}>
-                  {trophies > 0 ? trophies : '--'}
-                </Text>
-              </View>
+              <Text style={styles.arenaLabel}>Agora</Text>
+              <Text style={styles.arenaTrophies}>{trophies} 🏆</Text>
             </View>
 
-            {/* META */}
-            <View style={styles.goalSection}>
-              <Text style={styles.goalDelta}>+{trophiesDelta}</Text>
+            <Ionicons
+              name="arrow-forward"
+              size={22}
+              color="#9CA3AF"
+              style={{ marginHorizontal: 16 }}
+            />
 
-              <Text style={styles.goalLabel}>
-                {t('onboarding.planSummary.metric.targetLabel')}
-              </Text>
-
-              <Text style={styles.goalTagline}>
-                {t('onboarding.planSummary.metric.targetTagline')
-                  .replace('{from}', String(trophies))
-                  .replace('{to}', String(targetTrophies))}
+            <View style={styles.arenaCol}>
+              <View style={styles.arenaBadge}>
+                {targetArenaImg && (
+                  <Image
+                    source={targetArenaImg}
+                    style={styles.arenaImg}
+                    resizeMode="contain"
+                  />
+                )}
+              </View>
+              <Text style={styles.arenaLabel}>Meta</Text>
+              <Text style={styles.arenaTrophies}>
+                {targetTrophies} 🏆
               </Text>
             </View>
+          </View>
 
-            {/* WINRATE */}
-            <View style={styles.winrateRow}>
-              <View style={styles.winrateCol}>
-                <Text style={styles.winLabel}>Atual</Text>
-                <Text style={styles.winValue}>
-                  {currentWinRate > 0 ? `${currentWinRate}%` : '--'}
-                </Text>
-              </View>
+          {/* Delta */}
+          <View style={styles.deltaPill}>
+            <Text style={styles.deltaText}>+{trophiesDelta} troféus</Text>
+          </View>
 
-              <Ionicons
-                name="arrow-forward"
-                size={18}
-                color="#E5E7EB"
-                style={styles.winArrow}
-              />
-
-              <View style={[styles.winrateCol, { alignItems: 'flex-end' }]}>
-                <Text style={styles.winLabel}>Estimado</Text>
-                <Text style={styles.winValueHighlight}>
-                  {suggestedWinRate}%
-                </Text>
-              </View>
-            </View>
-
-            {/* CHIPS */}
-            <View style={styles.chipsRow}>
-              <View style={styles.chip}>
-                <Text style={styles.chipLabel}>
-                  {t('onboarding.planSummary.metric.costLabel')}
-                </Text>
-                <Text style={styles.chipValue}>{avgElixir}</Text>
-              </View>
-
-              <View style={styles.chip}>
-                <Text style={styles.chipLabel}>
-                  {t('onboarding.planSummary.metric.synergyLabel')}
-                </Text>
-                <Text style={styles.chipValue}>
-                  {synergyScore.toFixed(1)}/10
-                </Text>
-              </View>
-            </View>
-
-            {/* DECK BLOQUEADO */}
-            <View style={styles.deckSection}>
-              <Text style={styles.deckTitle}>
-                {t('onboarding.planSummary.deckTitleLocked')}
-              </Text>
-              <Text style={styles.deckSubtitle}>
-                {t('onboarding.planSummary.deckLockedCTA')}
-              </Text>
-
-              <View style={styles.deckWrapper}>
-                <View style={styles.deckGrid}>
-                  {currentDeck.slice(0, 8).map((card, index) => (
-                    <View key={index} style={styles.deckItem}>
-                      <View style={styles.deckCard}>
-                        {card.iconUrls?.medium ? (
-                          <Image
-                            source={{ uri: card.iconUrls.medium }}
-                            style={styles.deckCardImage}
-                            blurRadius={14}
-                          />
-                        ) : (
-                          <View style={styles.deckCardFallback} />
-                        )}
-                      </View>
-                    </View>
-                  ))}
+          {/* DECK PLACEHOLDER 4x2 – cartas menores, bem discretas */}
+          <View style={styles.deckWrapper}>
+            <View style={styles.deckGrid}>
+              {deckSlots.map((slotIndex: number) => (
+                <View key={slotIndex} style={styles.deckSlot}>
+                  <View style={styles.deckCardSlot} />
                 </View>
+              ))}
+            </View>
 
-                <View style={styles.deckLockOverlay}>
-                  <View style={styles.deckLockCircle}>
-                    <Ionicons name="lock-closed" size={20} color="#fff" />
-                  </View>
-                </View>
+            <View style={styles.deckOverlay}>
+              <View style={styles.lockCircle}>
+                <Ionicons name="lock-closed" size={16} color="#fff" />
               </View>
             </View>
-          </LinearGradient>
+          </View>
+
+          {/* MÉTRICAS */}
+          <View style={styles.metricsRow}>
+            <View style={styles.metricBox}>
+              <Text style={styles.metricValueBig}>{avgElixir}</Text>
+              <Text style={styles.metricLabelSmall}>
+                {t('onboarding.planSummary.metric.costLabel')}
+              </Text>
+            </View>
+
+            <View style={styles.metricBox}>
+              <Text style={styles.metricValueBig}>{synergy}/10</Text>
+              <Text style={styles.metricLabelSmall}>
+                {t('onboarding.planSummary.metric.synergyLabel')}
+              </Text>
+            </View>
+          </View>
         </Animated.View>
 
-        {/* BOTÕES */}
-        <TouchableOpacity
-          onPress={handleStart}
-          style={styles.primaryButton}
-          activeOpacity={0.9}
-        >
-          <LinearGradient
-            colors={['#6D28D9', '#7C3AED']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.primaryButtonInner}
-          >
-            <Text style={styles.primaryButtonText}>
-              {t('onboarding.planSummary.ctaPrimary')}
+        {/* TRIAL + CTA PRO */}
+        <View style={styles.trialWrapper}>
+          <View style={styles.trialPill}>
+            <Text style={styles.trialPillText}>
+              {t('onboarding.planSummary.trial.badge')}
             </Text>
-          </LinearGradient>
+          </View>
+          <Text style={styles.trialNote}>
+            {t('onboarding.planSummary.trial.copy')}
+          </Text>
+        </View>
+
+        {/* PRO – botão principal preto */}
+        <TouchableOpacity style={styles.primaryButton} onPress={handlePro}>
+          <Text style={styles.primaryButtonText}>
+            {t('onboarding.planSummary.ctaPro')}
+          </Text>
         </TouchableOpacity>
 
+        {/* GRÁTIS – parágrafo, sem cara de botão */}
         <TouchableOpacity
-          onPress={handleSkip}
-          style={styles.secondaryButton}
+          onPress={handleFree}
+          activeOpacity={0.7}
+          style={styles.freeTextWrapper}
         >
-          <Text style={styles.secondaryButtonText}>
+          <Text style={styles.freeText}>
             {t('onboarding.planSummary.ctaSecondary')}
           </Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
-/* ============= STYLES ============= */
-
+/* ========= STYLES ========= */
 const styles = StyleSheet.create({
-  heroTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    textAlign: 'center',
-    color: '#111',
-    marginTop: 4,
+  loadingSafe: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
   },
-  heroSubtitle: {
+  loadingText: {
+    marginTop: 14,
+    color: '#6B7280',
+  },
+
+  subtitleOnly: {
     fontSize: 13,
     textAlign: 'center',
-    color: '#6B7280',
-    marginTop: 4,
-    marginBottom: 2,
-    paddingHorizontal: 24,
+    color: '#9CA3AF',
+    marginTop: 10,
+    marginBottom: 8,
   },
 
-  cardWrapper: {
-    marginTop: 14,
-    width: '100%',
-    alignSelf: 'center',
-    maxWidth: 340,
-  },
-
-  card: {
-    borderRadius: 20,
+  mainCard: {
+    marginHorizontal: 16,
+    borderRadius: 24,
     paddingVertical: 14,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
+    backgroundColor: '#020617',
+    borderWidth: 1,
+    borderColor: '#020617',
   },
 
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  topLineFull: {
+    height: 1,
+    backgroundColor: '#111827',
+    marginBottom: 10,
   },
+
   playerName: {
+    fontSize: 14,
+    color: '#E5E7EB',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+
+  arenasRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  arenaCol: {
+    alignItems: 'center',
+  },
+  arenaBadge: {
+    width: 96,
+    height: 96,
+    borderRadius: 30,
+    backgroundColor: '#020617',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  arenaImg: {
+    width: 86,
+    height: 86,
+  },
+  arenaLabel: {
+    marginTop: 4,
+    fontSize: 11,
+    color: '#9CA3AF',
+  },
+  arenaTrophies: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#fff',
-  },
-  playerTag: {
+    color: '#F9FAFB',
     marginTop: 2,
-    fontSize: 11,
-    color: '#ddd',
-  },
-  arenaText: {
-    marginTop: 4,
-    fontSize: 11,
-    color: '#eee',
-    opacity: 0.9,
   },
 
-  trophyPill: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(15,23,42,0.45)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 20,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(250,204,21,0.35)',
+  deltaPill: {
+    alignSelf: 'center',
+    marginTop: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: '#111827',
+    marginBottom: 8,
   },
-  trophyPillText: {
-    color: '#FACC15',
-    marginLeft: 4,
-    fontSize: 12,
+  deltaText: {
+    fontSize: 11,
+    color: '#E5E7EB',
     fontWeight: '600',
   },
 
-  goalSection: {
-    marginTop: 14,
-  },
-  goalDelta: {
-    fontSize: 28,
-    color: '#fff',
-    fontWeight: '800',
-  },
-  goalLabel: {
-    fontSize: 12,
-    color: '#eee',
-    marginTop: 2,
-  },
-  goalTagline: {
-    marginTop: 2,
-    fontSize: 11,
-    color: '#ddd',
-  },
-
-  winrateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  winrateCol: {
-    flex: 1,
-  },
-  winLabel: {
-    fontSize: 11,
-    color: '#ddd',
-  },
-  winValue: {
-    marginTop: 2,
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  winValueHighlight: {
-    marginTop: 2,
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#fff',
-  },
-  winArrow: {
-    marginHorizontal: 10,
-    opacity: 0.7,
-  },
-
-  chipsRow: {
-    flexDirection: 'row',
-    marginTop: 14,
-    gap: 8,
-  },
-  chip: {
-    flex: 1,
-    borderRadius: 14,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    backgroundColor: 'rgba(0,0,0,0.28)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-  },
-  chipLabel: {
-    fontSize: 11,
-    color: '#ccc',
-  },
-  chipValue: {
-    marginTop: 3,
-    fontSize: 15,
-    color: '#fff',
-    fontWeight: '700',
-  },
-
-  deckSection: {
-    marginTop: 14,
-  },
-  deckTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  deckSubtitle: {
-    fontSize: 11,
-    color: '#eee',
-    opacity: 0.9,
-    marginTop: 2,
-  },
-
+  // Deck bem discreto
   deckWrapper: {
-    marginTop: 8,
-    borderRadius: 14,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    padding: 6,
+    borderRadius: 18,
+    overflow: 'hidden',
     position: 'relative',
+    backgroundColor: '#020617',
+    borderWidth: 1,
+    borderColor: '#111827',
   },
   deckGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
-  deckItem: {
+  deckSlot: {
     width: '25%',
     padding: 4,
-    alignItems: 'center',
   },
-  deckCard: {
-    width: 46,
-    height: 56,
-    borderRadius: 10,
-    overflow: 'hidden',
-    backgroundColor: 'rgba(30,41,59,0.8)',
-  },
-  deckCardImage: {
+  deckCardSlot: {
     width: '100%',
-    height: '100%',
-    opacity: 0.45,
+    aspectRatio: 0.78,
+    borderRadius: 12,
+    backgroundColor: '#0B1120',
+    transform: [{ scale: 0.86 }], // 👈 cartas menores
   },
-  deckCardFallback: {
-    flex: 1,
-    backgroundColor: 'rgba(50,60,80,0.8)',
-  },
-
-  deckLockOverlay: {
+  deckOverlay: {
     position: 'absolute',
     inset: 0,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  deckLockCircle: {
-    width: 38,
-    height: 38,
-    backgroundColor: 'rgba(0,0,0,0.75)',
-    borderRadius: 20,
+  lockCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: 'rgba(0,0,0,0.9)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+
+  metricsRow: {
+    flexDirection: 'row',
+    marginTop: 10,
+    gap: 8,
+  },
+  metricBox: {
+    flex: 1,
+    borderRadius: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    backgroundColor: '#020617',
+    borderWidth: 1,
+    borderColor: '#111827',
+  },
+  metricValueBig: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#F9FAFB',
+  },
+  metricLabelSmall: {
+    marginTop: 2,
+    fontSize: 11,
+    color: '#9CA3AF',
+  },
+
+  trialWrapper: {
+    marginTop: 16,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  trialPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: '#EEF2FF',
+  },
+  trialPillText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#4F46E5',
+  },
+  trialNote: {
+    marginTop: 6,
+    fontSize: 12,
+    color: '#6B7280',
+    textAlign: 'center',
   },
 
   primaryButton: {
-    marginTop: 18,
-    width: '100%',
-    maxWidth: 340,
-    alignSelf: 'center',
-  },
-  primaryButtonInner: {
-    borderRadius: 14,
-    paddingVertical: 12,
-    justifyContent: 'center',
+    marginTop: 14,
+    marginHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 999,
+    backgroundColor: '#111827',
     alignItems: 'center',
   },
   primaryButtonText: {
-    color: '#fff',
-    fontSize: 15,
+    color: '#F9FAFB',
+    fontSize: 16,
     fontWeight: '700',
   },
 
-  secondaryButton: {
-    marginTop: 8,
-    alignSelf: 'center',
+  freeTextWrapper: {
+    marginTop: 10,
+    marginHorizontal: 20,
+    marginBottom: 4,
+    alignItems: 'center',
   },
-  secondaryButtonText: {
+  freeText: {
     fontSize: 13,
     color: '#6B7280',
-    textDecorationLine: 'underline',
+    textAlign: 'center',
   },
 });

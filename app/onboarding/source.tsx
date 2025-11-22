@@ -9,10 +9,10 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons, Feather, FontAwesome6 } from '@expo/vector-icons';
 import { cloneElement, useState } from 'react';
-import { onboardingStyles as base } from './styles';
-import { ProgressBar } from './ProgressBar';
-import { useOnboarding } from './OnboardingProvider';
-import { useLocale } from '../i18n/LocaleProvider';
+import { onboardingStyles as base } from '../../src/onboarding/styles';
+import { ProgressBar } from '../../src/onboarding/ProgressBar';
+import { useOnboarding } from '../../src/onboarding/OnboardingProvider';
+import { useLocale } from '../../src/i18n/LocaleProvider';
 
 const SOURCES = [
   {

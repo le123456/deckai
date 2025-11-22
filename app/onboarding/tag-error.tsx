@@ -3,8 +3,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { onboardingStyles as base } from './styles';
-import { useLocale } from '../i18n/LocaleProvider';
+import { onboardingStyles as base } from '../../src/onboarding/styles';
+import { useLocale } from '../../src/i18n/LocaleProvider';
 
 export default function OnboardingTagError() {
   const router = useRouter();

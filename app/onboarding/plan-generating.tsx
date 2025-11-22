@@ -9,9 +9,9 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { onboardingStyles as base } from './styles';
-import { ProgressBar } from './ProgressBar';
-import { useLocale } from '../i18n/LocaleProvider';
+import { onboardingStyles as base } from '../../src/onboarding/styles';
+import { ProgressBar } from '../../src/onboarding/ProgressBar';
+import { useLocale } from '../../src/i18n/LocaleProvider';
 
 export default function OnboardingPlanGenerating() {
   const router = useRouter();

@@ -8,9 +8,9 @@ import {
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useLocale } from './i18n/LocaleProvider';
+import { useLocale } from '../src/i18n/LocaleProvider';
 
-const logo = require('../assets/images/deckia-logo.png');
+const logo = require('../assets/images/deckia-logo.webp');
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -44,7 +44,8 @@ export default function WelcomeScreen() {
           <Text style={styles.primaryButtonText}>{t('welcome.cta')}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity>
+        {/* LOGIN -> /auth/login */}
+        <TouchableOpacity onPress={() => router.push('/auth/login')}>
           <Text style={styles.secondary}>{t('welcome.loginLater')}</Text>
         </TouchableOpacity>
       </View>

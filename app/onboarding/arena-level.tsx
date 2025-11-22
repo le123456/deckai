@@ -10,35 +10,35 @@ import Slider from '@react-native-community/slider';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { onboardingStyles as base } from './styles';
-import { ProgressBar } from './ProgressBar';
-import { useOnboarding } from './OnboardingProvider';
-import { useLocale } from '../i18n/LocaleProvider';
+import { onboardingStyles as base } from '../../src/onboarding/styles';
+import { ProgressBar } from '../../src/onboarding/ProgressBar';
+import { useOnboarding } from '../../src/onboarding/OnboardingProvider';
+import { useLocale } from '../../src/i18n/LocaleProvider';
 
 const ARENAS = [
   {
     id: 'low',
     key: 'onboarding.arena.opt.1',
     value: 'Arena 1–4',
-    img: require('../../assets/arenas/arena_low.png'),
+    img: require('../../assets/arenas/arena_low.webp'),
   },
   {
     id: 'mid1',
     key: 'onboarding.arena.opt.2',
     value: 'Arena 5–9',
-    img: require('../../assets/arenas/arena_mid1.png'),
+    img: require('../../assets/arenas/arena_mid1.webp'),
   },
   {
     id: 'mid2',
     key: 'onboarding.arena.opt.3',
     value: 'Arena 10–13',
-    img: require('../../assets/arenas/arena_mid2.png'),
+    img: require('../../assets/arenas/arena_mid2.webp'),
   },
   {
     id: 'high',
     key: 'onboarding.arena.opt.4',
     value: 'Arena 14+',
-    img: require('../../assets/arenas/arena_high.png'),
+    img: require('../../assets/arenas/arena_high.webp'),
   },
 ];
 

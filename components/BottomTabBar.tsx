@@ -8,7 +8,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { useLocale } from "../app/i18n/LocaleProvider";
+import { useLocale } from "../src/i18n/LocaleProvider";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const TAB_CONFIG = {
   index: { key: "tabs.home", icon: "home-outline" },
@@ -19,6 +20,7 @@ const TAB_CONFIG = {
 
 export default function BottomTabBar({ state, navigation }: BottomTabBarProps) {
   const { t } = useLocale();
+  const insets = useSafeAreaInsets();
 
   const middle = Math.floor(state.routes.length / 2);
   const left = state.routes.slice(0, middle);
@@ -27,7 +29,6 @@ export default function BottomTabBar({ state, navigation }: BottomTabBarProps) {
   const renderTab = (route: any) => {
     const index = state.routes.findIndex((r) => r.key === route.key);
     const isFocused = state.index === index;
-    
 
     const config =
       TAB_CONFIG[route.name as keyof typeof TAB_CONFIG] ?? {
@@ -47,9 +48,8 @@ export default function BottomTabBar({ state, navigation }: BottomTabBarProps) {
           size={24}
           color={isFocused ? "#0F172A" : "#9CA3AF"}
         />
-        <Text
-          style={[styles.tabLabel, isFocused && styles.tabLabelActive]}
-        >
+
+        <Text style={[styles.tabLabel, isFocused && styles.tabLabelActive]}>
           {t(config.key) ?? route.name}
         </Text>
       </TouchableOpacity>
@@ -57,8 +57,8 @@ export default function BottomTabBar({ state, navigation }: BottomTabBarProps) {
   };
 
   return (
-    <View style={styles.fullWrapper}>
-      {/* TAB BAR FIXA */}
+    <View style={[styles.fullWrapper, { paddingBottom: insets.bottom + 4 }]}>
+      {/* Barra */}
       <View style={styles.barWrapper}>
         <View style={styles.bar}>
           <View style={styles.sideGroup}>{left.map(renderTab)}</View>
@@ -67,7 +67,7 @@ export default function BottomTabBar({ state, navigation }: BottomTabBarProps) {
         </View>
       </View>
 
-      {/* BOTÃO CENTRAL ABSOLUTO E CORRETAMENTE POSICIONADO */}
+      {/* Botão central */}
       <View style={styles.floatingButtonContainer} pointerEvents="box-none">
         <TouchableOpacity activeOpacity={0.85}>
           <View style={styles.centerButtonBg}>
@@ -85,13 +85,17 @@ const styles = StyleSheet.create({
   fullWrapper: {
     width: "100%",
     position: "relative",
+    backgroundColor: "transparent",
   },
 
   barWrapper: {
     width: "100%",
-    backgroundColor: "#F9FAFB",
     paddingHorizontal: 16,
-    paddingBottom: Platform.OS === "ios" ? 20 : 12,
+    backgroundColor: "transparent",
+    position: "absolute",
+    bottom: 25,
+    left: 0,
+    right: 0,
   },
 
   bar: {
@@ -103,7 +107,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 30,
     elevation: 8,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.10,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 4 },
   },
+
 
   sideGroup: {
     flexDirection: "row",
@@ -127,11 +137,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  /** BOTÃO CENTRAL FIXO */
   floatingButtonContainer: {
     position: "absolute",
     width: "100%",
-    bottom: 8,
+    bottom:45,
     alignItems: "center",
     zIndex: 999,
     pointerEvents: "box-none",
@@ -145,6 +154,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     elevation: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
   },
 
   centerButton: {
@@ -159,6 +172,6 @@ const styles = StyleSheet.create({
   centerPlus: {
     color: "#FFFFFF",
     fontSize: 30,
-    marginTop: -1,
+    marginTop: -3,
   },
 });

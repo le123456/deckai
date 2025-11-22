@@ -3,9 +3,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { onboardingStyles as base, CARD_WIDTH } from './styles';
-import { ProgressBar } from './ProgressBar';
-import { useLocale } from '../i18n/LocaleProvider';
+import { onboardingStyles as base, CARD_WIDTH } from '../../src/onboarding/styles';
+import { ProgressBar } from '../../src/onboarding/ProgressBar';
+import { useLocale } from '../../src/i18n/LocaleProvider';
 
 export default function OnboardingProofScreen() {
     const router = useRouter();

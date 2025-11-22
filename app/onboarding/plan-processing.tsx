@@ -9,9 +9,10 @@ import {
 } from 'react-native';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
-import { onboardingStyles as base } from './styles';
-import { ProgressBar } from './ProgressBar';
-import { useLocale } from '../i18n/LocaleProvider';
+import { onboardingStyles as base } from '../../src/onboarding/styles';
+import { ProgressBar } from '../../src/onboarding/ProgressBar';
+import { useLocale } from '../../src/i18n/LocaleProvider';
+import { useOnboarding } from '../../src/onboarding/OnboardingProvider';
 
 const CHECK_ITEMS = [
   'onboarding.planProcessing.item.style',
@@ -26,6 +27,7 @@ const CHECK_ITEMS = [
 export default function OnboardingPlanProcessing() {
   const router = useRouter();
   const { t } = useLocale();
+  const { answers } = useOnboarding();
 
   const [progress, setProgress] = useState(0);
   const progressAnim = useRef(new Animated.Value(0)).current;
@@ -35,7 +37,7 @@ export default function OnboardingPlanProcessing() {
     const stepMs = 80;
 
     const interval = setInterval(() => {
-      setProgress((prev) =>
+      setProgress(prev =>
         Math.min(prev + (100 * stepMs) / totalDuration, 100)
       );
     }, stepMs);
@@ -46,14 +48,27 @@ export default function OnboardingPlanProcessing() {
       useNativeDriver: false,
     }).start(() => {
       clearInterval(interval);
-      router.replace('/onboarding/plan-summary');
+
+      router.replace({
+        pathname: '/auth/create-account',
+        params: {
+          tag: answers.tag ?? '',
+          player: answers.player ? JSON.stringify(answers.player) : '',
+          onboarding: JSON.stringify({
+            goal: answers.goal,
+            source: answers.source,
+            playMode: answers.playMode,
+            arenaRange: answers.arenaRange,
+          }),
+        },
+      });
     });
 
     return () => {
       clearInterval(interval);
       progressAnim.stopAnimation();
     };
-  }, [progressAnim, router]);
+  }); // ← efeito roda apenas 1x (correto)
 
   const widthInterpolate = progressAnim.interpolate({
     inputRange: [0, 100],
@@ -72,9 +87,7 @@ export default function OnboardingPlanProcessing() {
       <ProgressBar step={7} total={7} />
 
       <View style={base.screenContainer}>
-        <Text style={base.title}>
-          {t('onboarding.planProcessing.title')}
-        </Text>
+        <Text style={base.title}>{t('onboarding.planProcessing.title')}</Text>
 
         <Text style={base.subtitle}>
           {t('onboarding.planProcessing.subtitle')}

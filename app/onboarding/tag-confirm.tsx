@@ -10,11 +10,11 @@ import {
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { onboardingStyles as base } from "./styles";
-import { ProgressBar } from "./ProgressBar";
-import { useOnboarding } from "./OnboardingProvider";
-import { useLocale } from "../i18n/LocaleProvider";
-import { arenaMap } from "../utils/arenaMap";
+import { onboardingStyles as base } from "../../src/onboarding/styles";
+import { ProgressBar } from "../../src/onboarding/ProgressBar";
+import { useOnboarding } from "../../src/onboarding/OnboardingProvider";
+import { useLocale } from "../../src/i18n/LocaleProvider";
+import { arenaMap } from "../../src/utils/arenaMap";
 
 type ClashCard = {
   iconUrls: { medium: string };
@@ -213,7 +213,7 @@ function DeckPro({
         {/* ELIXIR */}
         <View style={styles.elixirRow}>
           <Image
-            source={require("../../assets/icons/elixir.png")}
+            source={require("../../assets/icons/elixir.webp")}
             style={{ width: 14, height: 14, marginRight: 4 }}
           />
           <Text style={styles.elixirText}>{elixir}</Text>

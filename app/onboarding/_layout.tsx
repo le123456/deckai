@@ -1,5 +1,5 @@
 import { Stack } from 'expo-router';
-import { OnboardingProvider } from './OnboardingProvider';
+import { OnboardingProvider } from '../../src/onboarding/OnboardingProvider';
 
 export default function OnboardingLayout() {
   return (

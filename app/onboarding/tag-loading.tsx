@@ -3,9 +3,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { onboardingStyles as base } from './styles';
-import { useOnboarding } from './OnboardingProvider';
-import { useLocale } from '../i18n/LocaleProvider';
+import { onboardingStyles as base } from '../../src/onboarding/styles';
+import { useOnboarding } from '../../src/onboarding/OnboardingProvider';
+import { useLocale } from '../../src/i18n/LocaleProvider';
 
 export default function OnboardingTagLoading() {
   const router = useRouter();

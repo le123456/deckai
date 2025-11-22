@@ -3,10 +3,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { onboardingStyles as base } from './styles';
-import { ProgressBar } from './ProgressBar';
-import { useOnboarding, ClashGoal } from './OnboardingProvider';
-import { useLocale } from '../i18n/LocaleProvider';
+import { onboardingStyles as base } from '../../src/onboarding/styles';
+import { ProgressBar } from '../../src/onboarding/ProgressBar';
+import { useOnboarding, ClashGoal } from '../../src/onboarding/OnboardingProvider';
+import { useLocale } from '../../src/i18n/LocaleProvider';
 
 const OPTIONS: { id: ClashGoal; key: string; emoji: string }[] = [
   {
